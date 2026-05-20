@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#021420">
+<meta name="description" content="Live surf cams from around the world, ranked by wave conditions right now.">
+<title>🌊 SurfFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ─── TOKENS ─────────────────────────────────────────────── */
+  :root {
+    --bg:      #021420;
+    --card:    #041f30;
+    --surface: #062840;
+    --border:  #0d4060;
+    --foam:    #22d3ee;
+    --green:   #10b981;
+    --yellow:  #f59e0b;
+    --red:     #ef4444;
+    --white:   #f0faff;
+    --muted:   #5b8fa8;
+    --text:    #cce8f4;
+  }
+
+  /* ─── RESET ──────────────────────────────────────────────── */
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; background:var(--bg); color:var(--white); font-family:'Barlow',sans-serif; overflow:hidden; }
+
+  /* ─── LAYOUT ─────────────────────────────────────────────── */
+  #app { display:flex; flex-direction:column; height:100%; max-width:480px; margin:0 auto; }
+
+  /* ─── TOP BAR ────────────────────────────────────────────── */
+  #topbar { flex-shrink:0; background:var(--card); border-bottom:1px solid var(--border); padding:10px 14px 8px; }
+  .tb1 { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .logo { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1.5rem; color:var(--foam); letter-spacing:.02em; }
+  .logo span { color:var(--white); }
+  .live-badge { display:flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:.75rem; font-weight:700; color:var(--green); letter-spacing:.06em; }
+  .live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+  .counter { font-family:'Barlow Condensed',sans-serif; font-size:.85rem; color:var(--muted); }
+  .counter b { color:var(--foam); font-size:1.05rem; }
+  #loc-name { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.45rem; line-height:1.1; color:var(--white); }
+  #loc-region { font-size:.78rem; color:var(--muted); margin-top:1px; }
+
+  /* ─── WAVE BAR ───────────────────────────────────────────── */
+  #wave-bar { flex-shrink:0; background:var(--surface); border-bottom:1px solid var(--border); padding:8px 14px; display:flex; align-items:center; gap:10px; }
+  #wave-emoji { font-size:1.75rem; flex-shrink:0; transition:opacity .3s; }
+  #wave-status { flex:1; min-width:0; }
+  #wave-hl { font-family:'Barlow Condensed',sans-serif; font-size:1.15rem; font-weight:700; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color .3s; }
+  #wave-detail { font-size:.75rem; color:var(--muted); margin-top:2px; }
+  #score-pill { font-family:'Barlow Condensed',sans-serif; font-size:1.2rem; font-weight:900; padding:5px 10px; border-radius:8px; border:2px solid; flex-shrink:0; visibility:hidden; transition:all .3s; }
+  .sf { color:#10b981; border-color:#10b981; background:#10b98118; }
+  .sg { color:#22d3ee; border-color:#22d3ee; background:#22d3ee12; }
+  .so { color:#f59e0b; border-color:#f59e0b; background:#f59e0b12; }
+  .sl { color:#ef4444; border-color:#ef4444; background:#ef444412; }
+
+  /* ─── VIDEO AREA ─────────────────────────────────────────── */
+  #vwrap { flex:1; position:relative; overflow:hidden; background:#010d16; min-height:0; }
+  #vframe { position:absolute; inset:0; width:100%; height:100%; border:none; }
+
+  /* ─── BOTTOM GRADIENT + BUTTONS ─────────────────────────── */
+  #bottom-ui {
+    position:absolute; bottom:0; left:0; right:0; z-index:20;
+    background:linear-gradient(to top, rgba(2,20,32,.97) 50%, transparent);
+    padding:22px 14px 10px;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    pointer-events:none;
+  }
+
+  /* Big red YouTube button */
+  .yt-btn {
+    pointer-events:all;
+    background:#ff0000; color:#fff; border:none; border-radius:50px;
+    padding:15px 24px; font-family:'Barlow Condensed',sans-serif; font-size:1.15rem;
+    font-weight:800; letter-spacing:.06em; cursor:pointer;
+    display:flex; align-items:center; gap:10px;
+    width:100%; max-width:320px; justify-content:center;
+    box-shadow:0 4px 24px rgba(255,0,0,.4);
+    transition:transform .1s, opacity .1s;
+  }
+  .yt-btn:active { transform:scale(.97); opacity:.88; }
+  .yt-icon { font-size:1.35rem; }
+
+  /* Live indicator on button */
+  .yt-live-pill {
+    font-size:.7rem; font-weight:700; padding:2px 6px; border-radius:4px;
+    background:rgba(255,255,255,.2); letter-spacing:.04em;
+  }
+
+  .sub-row { pointer-events:all; display:flex; gap:8px; width:100%; max-width:320px; }
+  .sub-btn {
+    flex:1; background:rgba(4,31,48,.92); border:1px solid var(--border);
+    color:var(--text); font-family:'Barlow Condensed',sans-serif;
+    font-size:.9rem; font-weight:600; padding:9px 12px; border-radius:50px;
+    cursor:pointer; letter-spacing:.04em; text-align:center;
+    transition:background .15s;
+  }
+  .sub-btn:active { background:var(--surface); }
+
+  /* ─── LOADING SCREEN ─────────────────────────────────────── */
+  #lo {
+    position:absolute; inset:0; background:var(--bg); z-index:40;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+    transition:opacity .5s;
+  }
+  #lo.hidden { opacity:0; pointer-events:none; }
+  .wl { display:flex; gap:5px; align-items:flex-end; height:36px; }
+  .wb { width:6px; background:var(--foam); border-radius:3px; animation:wr 1s ease-in-out infinite; }
+  .wb:nth-child(1){animation-delay:0s} .wb:nth-child(2){animation-delay:.15s}
+  .wb:nth-child(3){animation-delay:.3s} .wb:nth-child(4){animation-delay:.45s}
+  .wb:nth-child(5){animation-delay:.6s}
+  @keyframes wr { 0%,100%{height:8px;opacity:.35} 50%{height:32px;opacity:1} }
+  .lt { font-family:'Barlow Condensed',sans-serif; font-size:1.05rem; color:var(--muted); letter-spacing:.1em; }
+  #lo-status { font-size:.75rem; color:var(--muted); opacity:.7; letter-spacing:.05em; }
+
+  /* ─── TRANSITION FLASH ───────────────────────────────────── */
+  #flash { position:absolute; inset:0; background:var(--foam); opacity:0; pointer-events:none; z-index:30; transition:opacity .1s; }
+  #flash.on { opacity:.07; }
+
+  /* ─── FORECAST MODAL ─────────────────────────────────────── */
+  #modal {
+    position:absolute; inset:0; background:rgba(2,20,32,.97); z-index:50;
+    display:none; flex-direction:column; padding:20px; overflow-y:auto;
+  }
+  #modal.show { display:flex; }
+  .mhdr { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+  .mtitle { font-family:'Barlow Condensed',sans-serif; font-size:1.65rem; font-weight:800; line-height:1.1; }
+  .mclose { background:var(--surface); border:1px solid var(--border); color:var(--white); font-size:1.2rem; width:42px; height:42px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .mclose:active { background:var(--border); }
+  .live-tag { display:inline-flex; align-items:center; gap:5px; font-size:.72rem; font-weight:700; color:var(--green); background:#10b98118; border:1px solid var(--green); border-radius:20px; padding:3px 9px; margin-bottom:10px; letter-spacing:.06em; }
+  .sgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+  .scard { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; }
+  .slbl { font-size:.68rem; color:var(--muted); letter-spacing:.09em; text-transform:uppercase; margin-bottom:3px; }
+  .sval { font-family:'Barlow Condensed',sans-serif; font-size:1.5rem; font-weight:700; color:var(--foam); line-height:1; }
+  .ssub { font-size:.73rem; color:var(--muted); margin-top:2px; }
+  .fnote { background:var(--surface); border-left:3px solid var(--foam); border-radius:0 8px 8px 0; padding:12px 14px; font-size:.86rem; color:var(--text); line-height:1.6; margin-bottom:14px; }
+  .myt { background:#ff0000; color:#fff; border:none; border-radius:50px; padding:14px; font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:800; cursor:pointer; width:100%; margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .mnote { color:var(--muted); font-size:.7rem; text-align:center; }
+
+  /* ─── NAV BUTTONS ────────────────────────────────────────── */
+  #nav { flex-shrink:0; display:grid; grid-template-columns:1fr 1fr; gap:2px; background:var(--border); border-top:1px solid var(--border); }
+  .nb { background:var(--card); border:none; color:var(--white); font-family:'Barlow Condensed',sans-serif; font-size:1.3rem; font-weight:700; letter-spacing:.05em; padding:18px 16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; min-height:68px; user-select:none; }
+  .nb:active { background:var(--surface); }
+  .ar { font-size:1.7rem; color:var(--foam); line-height:1; }
+  .nb.p { border-right:1px solid var(--border); }
+
+  /* ─── THUMBNAIL STRIP ────────────────────────────────────── */
+  #ts { flex-shrink:0; background:var(--bg); border-top:1px solid var(--border); padding:8px 10px; display:flex; gap:7px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  #ts::-webkit-scrollbar { display:none; }
+  .th { flex-shrink:0; scroll-snap-align:start; width:78px; cursor:pointer; border-radius:7px; overflow:hidden; border:2px solid transparent; transition:border-color .2s, transform .15s; position:relative; }
+  .th.active { border-color:var(--foam); transform:scale(1.06); }
+  .thi { width:100%; height:50px; object-fit:cover; display:block; background:var(--surface); }
+  .thl { background:var(--card); font-family:'Barlow Condensed',sans-serif; font-size:.58rem; font-weight:600; color:var(--text); padding:3px 4px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ths { position:absolute; top:3px; right:3px; font-family:'Barlow Condensed',sans-serif; font-size:.62rem; font-weight:700; padding:1px 4px; border-radius:3px; background:rgba(0,0,0,.78); }
+  .th-live-dot { position:absolute; top:3px; left:3px; width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse 1.8s ease-in-out infinite; }
+
+  /* ─── ERROR STATE ────────────────────────────────────────── */
+  #error-screen { position:absolute; inset:0; background:var(--bg); z-index:35; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:32px; }
+  #error-screen.show { display:flex; }
+  .err-icon { font-size:3.5rem; }
+  .err-title { font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:700; color:var(--muted); }
+  .err-sub { font-size:.88rem; color:var(--muted); line-height:1.5; max-width:280px; }
+  .retry-btn { background:var(--surface); border:1px solid var(--border); color:var(--foam); font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; padding:12px 28px; border-radius:50px; cursor:pointer; letter-spacing:.05em; }
+
+  /* ─── DESKTOP FRAME ──────────────────────────────────────── */
+  @media (min-width:481px) {
+    body { background:#010e18; }
+    #app { border-left:1px solid var(--border); border-right:1px solid var(--border); box-shadow:0 0 80px #0891b228; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="tb1">
+      <div class="logo">🌊<span>SURF</span>FLOW</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="live-badge" id="live-badge" style="display:none">
+          <div class="live-dot"></div>LIVE CAMS
+        </div>
+        <div class="counter"><b id="cc">—</b> of <span id="ct">—</span></div>
+      </div>
+    </div>
+    <div id="loc-name">Loading best surf...</div>
+    <div id="loc-region">Fetching live wave data</div>
+  </div>
+
+  <!-- WAVE BAR -->
+  <div id="wave-bar">
+    <div id="wave-emoji">🌊</div>
+    <div id="wave-status">
+      <div id="wave-hl" style="color:var(--muted)">Checking conditions...</div>
+      <div id="wave-detail">Scoring wave forecasts globally</div>
+    </div>
+    <div id="score-pill" class="sg"><span id="snum">—</span></div>
+  </div>
+
+  <!-- VIDEO AREA -->
+  <div id="vwrap">
+    <iframe id="vframe" src="" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Surf Cam"></iframe>
+
+    <!-- BOTTOM UI — YouTube button always visible -->
+    <div id="bottom-ui">
+      <button class="yt-btn" id="yt-btn">
+        <span class="yt-icon">▶</span>
+        <span id="yt-btn-text">WATCH ON YOUTUBE</span>
+        <span class="yt-live-pill" id="live-pill" style="display:none">LIVE</span>
+      </button>
+      <div class="sub-row">
+        <button class="sub-btn" onclick="showModal()">📊 Wave Info</button>
+        <button class="sub-btn" id="auto-btn" onclick="toggleAuto()">⏩ Auto: OFF</button>
+      </div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="lo">
+      <div class="wl">
+        <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+        <div class="wb"></div><div class="wb"></div>
+      </div>
+      <div class="lt">FINDING BEST SURF</div>
+      <div id="lo-status">Fetching live wave data...</div>
+    </div>
+
+    <!-- ERROR -->
+    <div id="error-screen">
+      <div class="err-icon">📡</div>
+      <div class="err-title">Couldn't load surf data</div>
+      <div class="err-sub">Check your connection and try again. The wave scoring worker may be warming up.</div>
+      <button class="retry-btn" onclick="init()">Try Again</button>
+    </div>
+
+    <!-- TRANSITION FLASH -->
+    <div id="flash"></div>
+
+    <!-- FORECAST MODAL -->
+    <div id="modal">
+      <div class="mhdr">
+        <div>
+          <div class="mtitle" id="mtitle">Wave Info</div>
+          <div style="color:var(--muted);font-size:.8rem;margin-top:3px" id="mreg"></div>
+          <div class="live-tag" id="mlive" style="display:none"><div class="live-dot"></div>STREAMING LIVE NOW</div>
+        </div>
+        <button class="mclose" onclick="hideModal()">✕</button>
+      </div>
+      <div class="sgrid" id="sgrid"></div>
+      <div class="fnote" id="fnote"></div>
+      <button class="myt" id="myt-btn"><span>▶</span> WATCH ON YOUTUBE</button>
+      <div class="mnote">
+        Wave data: Open-Meteo Marine API · Updated every 15 min<br>
+        Live streams: YouTube Data API · surfcam.stluker.com
+      </div>
+    </div>
+  </div><!-- /vwrap -->
+
+  <!-- NAV BUTTONS -->
+  <div id="nav">
+    <button class="nb p" onclick="navigate(-1)"><span class="ar">←</span> PREV SPOT</button>
+    <button class="nb"   onclick="navigate(1)">NEXT SPOT <span class="ar">→</span></button>
+  </div>
+
+  <!-- THUMBNAIL STRIP -->
+  <div id="ts"></div>
+
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG — update API_URL after deploying the Worker
+// ═══════════════════════════════════════════════════════════════
+const API_URL   = "https://surfcam.stluker.com/api/feed";
+const AUTO_SECS = 60;
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let cams     = [];   // ranked cam list from API
+let idx      = 0;
+let autoOn   = false;
+let autoTimer= null;
+let feedMeta = {};
+
+// ═══════════════════════════════════════════════════════════════
+//  FETCH SCORED FEED FROM WORKER
+// ═══════════════════════════════════════════════════════════════
+async function fetchFeed() {
+  setLoadStatus("Contacting scoring worker...");
+  const res  = await fetch(API_URL, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Feed returned ${res.status}`);
+  const data = await res.json();
+  cams = data.cams || [];
+  feedMeta = { generatedAt: data.generatedAt, liveCount: data.liveCount, totalCams: data.totalCams };
+  return data;
+}
+
+function setLoadStatus(msg) {
+  const el = document.getElementById("lo-status");
+  if (el) el.textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SCORE → UI HELPERS
+// ═══════════════════════════════════════════════════════════════
+function scoreCls(s) { return s >= 80 ? "sf" : s >= 60 ? "sg" : s >= 40 ? "so" : "sl"; }
+function scoreEmoji(s){ return s >= 80 ? "🔥" : s >= 60 ? "🌊" : s >= 40 ? "〰️" : "😴"; }
+function compass(d)  { return ["N","NE","E","SE","S","SW","W","NW"][Math.round(d/45)%8]; }
+function scoreColor(s){ return s>=80?"#10b981":s>=60?"var(--foam)":s>=40?"#f59e0b":"var(--muted)"; }
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER THUMBNAIL STRIP
+// ═══════════════════════════════════════════════════════════════
+function renderThumbs() {
+  const strip = document.getElementById("ts");
+  strip.innerHTML = "";
+  cams.forEach((cam, i) => {
+    const sc  = cam.score ?? 50;
+    const cl  = scoreCls(sc);
+    const col = sc>=80?"#10b981":sc>=60?"#22d3ee":sc>=40?"#f59e0b":"#ef4444";
+    const d   = document.createElement("div");
+    d.className = "th" + (i===idx ? " active" : "");
+    d.innerHTML = `
+      ${cam.isLive ? '<div class="th-live-dot"></div>' : ""}
+      <img class="thi" src="${cam.thumb || ""}" alt="${cam.name}"
+        onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2278%22 height=%2250%22><rect width=%2278%22 height=%2250%22 fill=%22%23062840%22/><text x=%2250%25%22 y=%2255%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2222%22>🌊</text></svg>'">
+      <div class="ths" style="color:${col}">${sc}</div>
+      <div class="thl">${cam.name}</div>`;
+    d.onclick = () => goTo(i);
+    strip.appendChild(d);
+  });
+}
+
+function syncThumbActive() {
+  document.querySelectorAll(".th").forEach((t, i) => t.classList.toggle("active", i===idx));
+  const a = document.querySelector(".th.active");
+  if (a) a.scrollIntoView({ behavior:"smooth", block:"nearest", inline:"center" });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOAD A CAMERA INTO THE PLAYER
+// ═══════════════════════════════════════════════════════════════
+function loadCam(cam) {
+  // Top bar
+  document.getElementById("loc-name").textContent    = cam.name;
+  document.getElementById("loc-region").textContent  = cam.region;
+  document.getElementById("cc").textContent          = idx + 1;
+  document.getElementById("ct").textContent          = cams.length;
+
+  // Wave bar
+  const whl = document.getElementById("wave-hl");
+  whl.textContent = cam.waveHeadline || "Checking conditions...";
+  whl.style.color = scoreColor(cam.score);
+  document.getElementById("wave-detail").textContent = cam.waveDetail || "No forecast data";
+  document.getElementById("wave-emoji").textContent  = scoreEmoji(cam.score ?? 50);
+
+  const pill = document.getElementById("score-pill");
+  pill.className = scoreCls(cam.score ?? 50);
+  pill.style.visibility = "";
+  document.getElementById("snum").textContent = cam.score ?? "—";
+
+  // Live badge
+  const liveBadge = document.getElementById("live-badge");
+  liveBadge.style.display = feedMeta.liveCount > 0 ? "flex" : "none";
+
+  // YouTube button
+  const ytUrl = cam.ytSearch || `https://www.youtube.com/watch?v=${cam.videoId}`;
+  document.getElementById("yt-btn").onclick = () => window.open(ytUrl, "_blank");
+  document.getElementById("myt-btn").onclick = () => window.open(ytUrl, "_blank");
+
+  const livePill = document.getElementById("live-pill");
+  const btnText  = document.getElementById("yt-btn-text");
+  if (cam.isLive) {
+    livePill.style.display = "inline";
+    btnText.textContent    = "WATCH LIVE ON YOUTUBE";
+  } else {
+    livePill.style.display = "none";
+    btnText.textContent    = "WATCH ON YOUTUBE";
+  }
+
+  // Load iframe — brief blank src reset prevents flash of old content
+  const frame = document.getElementById("vframe");
+  frame.src = "";
+  setTimeout(() => {
+    frame.src = `https://www.youtube.com/embed/${cam.videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1&playsinline=1`;
+  }, 60);
+
+  syncThumbActive();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function doFlash() {
+  const f = document.getElementById("flash");
+  f.classList.add("on");
+  setTimeout(() => f.classList.remove("on"), 130);
+}
+
+function goTo(i) {
+  if (!cams.length) return;
+  if (i < 0) i = cams.length - 1;
+  if (i >= cams.length) i = 0;
+  idx = i;
+  doFlash();
+  loadCam(cams[idx]);
+}
+
+function navigate(dir) { goTo(idx + dir); }
+
+// ═══════════════════════════════════════════════════════════════
+//  AUTO-ADVANCE
+// ═══════════════════════════════════════════════════════════════
+function toggleAuto() {
+  autoOn = !autoOn;
+  document.getElementById("auto-btn").textContent = autoOn ? "⏩ Auto: ON" : "⏩ Auto: OFF";
+  if (autoOn) {
+    autoTimer = setInterval(() => goTo(idx + 1), AUTO_SECS * 1000);
+  } else {
+    clearInterval(autoTimer);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FORECAST MODAL
+// ═══════════════════════════════════════════════════════════════
+function showModal() {
+  const cam = cams[idx];
+  if (!cam) return;
+
+  document.getElementById("mtitle").textContent = cam.name;
+  document.getElementById("mreg").textContent   = cam.region;
+
+  const liveTag = document.getElementById("mlive");
+  liveTag.style.display = cam.isLive ? "inline-flex" : "none";
+
+  const f    = cam.forecast;
+  const grid = document.getElementById("sgrid");
+
+  if (f) {
+    grid.innerHTML = `
+      <div class="scard">
+        <div class="slbl">Wave Height</div>
+        <div class="sval">${f.waveHeightFt}<span style="font-size:.9rem">ft</span></div>
+        <div class="ssub">${(parseFloat(f.waveHeightFt)/3.281).toFixed(1)}m</div>
+      </div>
+      <div class="scard">
+        <div class="slbl">Swell Period</div>
+        <div class="sval">${f.periodSec}<span style="font-size:.9rem">s</span></div>
+        <div class="ssub">${f.periodSec>14?"Long — very clean":f.periodSec>10?"Medium — good":f.periodSec>7?"Short":"Choppy"}</div>
+      </div>
+      <div class="scard">
+        <div class="slbl">Swell Height</div>
+        <div class="sval">${f.swellHeightFt}<span style="font-size:.9rem">ft</span></div>
+        <div class="ssub">Ground swell</div>
+      </div>
+      <div class="scard">
+        <div class="slbl">Direction</div>
+        <div class="sval">${compass(f.directionDeg)}</div>
+        <div class="ssub">${f.directionDeg}°</div>
+      </div>`;
+  } else {
+    grid.innerHTML = `<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:16px">${cam.desc || "No forecast available for this location."}</div>`;
+  }
+
+  const sc = cam.score ?? 50;
+  const notes = {
+    sf: `🔥 Exceptional right now at ${cam.name}. ${f ? f.swellHeightFt + "ft of ground swell with " + f.periodSec + "s period — " : ""}powerful, well-shaped waves. ${cam.desc || ""}`,
+    sg: `Solid surf at ${cam.name}. ${f ? f.waveHeightFt + "ft with " + f.periodSec + "s period. " : ""}Above average — expect quality rides. ${cam.desc || ""}`,
+    so: `Decent waves at ${cam.name} — ${f ? f.waveHeightFt + "ft. " : ""}Worth watching, action in the water. ${cam.desc || ""}`,
+    sl: `Small today at ${cam.name}${f ? " — " + f.waveHeightFt + "ft" : ""}. Great scenery. Check back after the next swell. ${cam.desc || ""}`
+  };
+  document.getElementById("fnote").textContent = notes[scoreCls(sc)] || cam.desc || "";
+  document.getElementById("modal").classList.add("show");
+}
+
+function hideModal() { document.getElementById("modal").classList.remove("show"); }
+
+// ═══════════════════════════════════════════════════════════════
+//  SWIPE GESTURES (mobile)
+// ═══════════════════════════════════════════════════════════════
+let tx = 0, ty = 0;
+const vw = document.getElementById("vwrap");
+vw.addEventListener("touchstart", e => { tx = e.changedTouches[0].screenX; ty = e.changedTouches[0].screenY; }, { passive:true });
+vw.addEventListener("touchend",   e => {
+  const dx = e.changedTouches[0].screenX - tx;
+  const dy = e.changedTouches[0].screenY - ty;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 55) navigate(dx < 0 ? 1 : -1);
+}, { passive:true });
+
+// Keyboard (desktop)
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") navigate(1);
+  if (e.key === "ArrowLeft"  || e.key === "ArrowUp")   navigate(-1);
+  if (e.key === "Escape") hideModal();
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  WAKE LOCK — prevents screen sleep on TV / kiosk
+// ═══════════════════════════════════════════════════════════════
+async function requestWakeLock() {
+  try { if ("wakeLock" in navigator) await navigator.wakeLock.request("screen"); } catch(_) {}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BACKGROUND REFRESH — silently re-fetches feed every 15 min
+//  Updates cam order if scores changed, without interrupting playback
+// ═══════════════════════════════════════════════════════════════
+async function backgroundRefresh() {
+  try {
+    const data = await fetchFeed();
+    const currentCamId = cams[idx]?.id;
+    cams = data.cams || [];
+    feedMeta = { generatedAt: data.generatedAt, liveCount: data.liveCount };
+
+    // Try to keep the user on the same cam after refresh
+    const newIdx = cams.findIndex(c => c.id === currentCamId);
+    idx = newIdx >= 0 ? newIdx : 0;
+
+    renderThumbs();
+    syncThumbActive();
+    console.log(`[SurfFlow] Feed refreshed: ${cams.length} cams, ${feedMeta.liveCount} live`);
+  } catch (err) {
+    console.warn("[SurfFlow] Background refresh failed:", err.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+async function init() {
+  const lo    = document.getElementById("lo");
+  const errSc = document.getElementById("error-screen");
+
+  lo.classList.remove("hidden");
+  errSc.classList.remove("show");
+
+  try {
+    setLoadStatus("Fetching live wave data...");
+    await fetchFeed();
+
+    setLoadStatus(`Found ${feedMeta.liveCount || 0} live cams · Ranking by wave score...`);
+    await new Promise(r => setTimeout(r, 400)); // brief pause so user sees the status
+
+    if (!cams.length) throw new Error("No cams returned");
+
+    // Render and load first (best) cam
+    renderThumbs();
+    loadCam(cams[0]);
+
+    // Hide loading screen
+    lo.classList.add("hidden");
+
+    // Kick off background jobs
+    requestWakeLock();
+    setInterval(backgroundRefresh, 15 * 60 * 1000); // refresh every 15 min
+
+  } catch (err) {
+    console.error("[SurfFlow] Init failed:", err);
+    lo.classList.add("hidden");
+    errSc.classList.add("show");
+  }
+}
+
+window.addEventListener("load", init);
+</script>
+</body>
+</html>

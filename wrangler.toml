@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────────
+# SurfFlow — Cloudflare Worker Configuration
+# Deploy with: npx wrangler deploy
+# ─────────────────────────────────────────────────────────────
+
+name            = "surfflow-scoring"
+main            = "worker/index.js"
+compatibility_date = "2024-01-01"
+account_id      = "YOUR_CLOUDFLARE_ACCOUNT_ID"   # paste from CF dashboard
+
+# ── Routes ──────────────────────────────────────────────────
+# This makes the worker respond to https://surfcam.stluker.com/api/*
+# while Cloudflare Pages still serves the HTML at /
+[[routes]]
+pattern = "surfcam.stluker.com/api/*"
+zone_name = "stluker.com"
+
+# ── Cron schedule ───────────────────────────────────────────
+# Runs the scoring engine every 15 minutes, 24/7, at no cost
+[triggers]
+crons = ["*/15 * * * *"]
+
+# ── KV Namespace ────────────────────────────────────────────
+# Create with: npx wrangler kv:namespace create "SURF_KV"
+# Then paste the returned id below
+[[kv_namespaces]]
+binding  = "SURF_KV"
+id       = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
+
+# ── Secrets (set via CLI, not stored here) ──────────────────
+# Run this after deploying:
+#   npx wrangler secret put YOUTUBE_API_KEY
+# Then paste your key when prompted.
+# Never put the actual key value in this file.
+
+# ── Local dev ────────────────────────────────────────────────
+# For local testing: npx wrangler dev
+# Your KV is mocked locally — no real requests hit Cloudflare
