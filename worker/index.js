@@ -43,7 +43,7 @@ const CURATED_CAMS = [
     minWave: 10,
     ytSearch: "https://www.youtube.com/results?search_query=nazare+big+wave+surf+live",
     // Nazare big wave compilation 2024/2025 — verified public
-    fallbackVideoId: "aHIhSXFMNzg",
+    fallbackVideoId: "ROCIyvRCakc",
     thumb: "https://images.unsplash.com/photo-1509914398892-963f53e6e2f1?w=200&h=120&fit=crop&q=80",
     tags: ["big-wave", "world-record"],
     desc: "Home of the world-record wave. Underwater canyon funnels Atlantic swells into 20m+ monsters."
