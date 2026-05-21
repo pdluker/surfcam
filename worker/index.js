@@ -1,4 +1,4 @@
-/**
+ /**
  * SurfFlow Scoring Worker
  * Cloudflare Worker — runs on cron every 15 minutes
  *
@@ -29,7 +29,8 @@ const CURATED_CAMS = [
     minWave: 4,
     ytSearch: "https://www.youtube.com/results?search_query=pipeline+hawaii+surf+live+cam+now",
     // Fallback video shown when no live stream is found
-    fallbackVideoId: "zLDlMp5ztcI",
+    // Pipeline Goes HUGE March 2025 — 4K verified public
+    fallbackVideoId: "uSd14Y7ZmZ4",
     thumb: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=200&h=120&fit=crop&q=80",
     tags: ["barrel", "reef", "world-class"],
     desc: "The world's most famous wave. Hollow reef barrels off Ehukai Beach Park, best November–February."
@@ -41,7 +42,8 @@ const CURATED_CAMS = [
     lat: 39.6003, lng: -9.0694,
     minWave: 10,
     ytSearch: "https://www.youtube.com/results?search_query=nazare+big+wave+surf+live",
-    fallbackVideoId: "7fsMm4pJBZM",
+    // Nazare big wave compilation 2024/2025 — verified public
+    fallbackVideoId: "aHIhSXFMNzg",
     thumb: "https://images.unsplash.com/photo-1509914398892-963f53e6e2f1?w=200&h=120&fit=crop&q=80",
     tags: ["big-wave", "world-record"],
     desc: "Home of the world-record wave. Underwater canyon funnels Atlantic swells into 20m+ monsters."
@@ -53,7 +55,8 @@ const CURATED_CAMS = [
     lat: -8.8291, lng: 115.0849,
     minWave: 3,
     ytSearch: "https://www.youtube.com/results?search_query=uluwatu+bali+surf+live+cam",
-    fallbackVideoId: "G4_P7MTkAz4",
+    // Uluwatu first big swell of year May 2026 — verified public
+    fallbackVideoId: "krIpT3ECCfM",
     thumb: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=120&fit=crop&q=80",
     tags: ["reef", "left-hander", "tropical"],
     desc: "Sacred temple above a legendary left-hander. Best May–September on Indian Ocean swells."
@@ -65,7 +68,8 @@ const CURATED_CAMS = [
     lat: -17.8372, lng: -149.2699,
     minWave: 5,
     ytSearch: "https://www.youtube.com/results?search_query=teahupoo+tahiti+surf+live",
-    fallbackVideoId: "3KqpAcghJGI",
+    // Teahupoo Olympic venue 2024 documentary — verified public
+    fallbackVideoId: "HvKkyIhVkco",
     thumb: "https://images.unsplash.com/photo-1455264745730-cb3b76250ae8?w=200&h=120&fit=crop&q=80",
     tags: ["slab", "heavy", "olympics"],
     desc: "The thickest, heaviest wave in surfing. A shallow reef produces terrifying slabs."
@@ -77,7 +81,8 @@ const CURATED_CAMS = [
     lat: -34.0517, lng: 24.9206,
     minWave: 4,
     ytSearch: "https://www.youtube.com/results?search_query=jeffreys+bay+surf+live+cam",
-    fallbackVideoId: "d1FoCE9Xzp0",
+    // JBay firing with pros warming up July 2025 — verified public
+    fallbackVideoId: "wJau8vowlrU",
     thumb: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=200&h=120&fit=crop&q=80",
     tags: ["pointbreak", "right-hander"],
     desc: "One of the world's great right-hand pointbreaks. Perfect lined walls during July swells."
@@ -89,7 +94,8 @@ const CURATED_CAMS = [
     lat: 37.4954, lng: -122.4975,
     minWave: 8,
     ytSearch: "https://www.youtube.com/results?search_query=mavericks+surf+live+cam+california",
-    fallbackVideoId: "OtT7_DrCg8Q",
+    // Mavericks potential world record Dec 2024 — verified public
+    fallbackVideoId: "9JmN8_zUY1w",
     thumb: "https://images.unsplash.com/photo-1476673160081-cf065607f449?w=200&h=120&fit=crop&q=80",
     tags: ["big-wave", "cold-water"],
     desc: "Legendary big-wave spot. Waves reach 60ft+ on massive NW winter swells."
@@ -101,7 +107,8 @@ const CURATED_CAMS = [
     lat: -28.0197, lng: 153.4425,
     minWave: 3,
     ytSearch: "https://www.youtube.com/results?search_query=snapper+rocks+gold+coast+surf+live",
-    fallbackVideoId: "YFNFphh3qoA",
+    // Snapper Rocks meaty slabs Feb 2025 — verified public
+    fallbackVideoId: "wSi3MLX-Yxo",
     thumb: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&h=120&fit=crop&q=80",
     tags: ["pointbreak", "superbank"],
     desc: "Start of the famous Superbank. Sand-bottom pointbreak producing rides up to 2km."
@@ -113,7 +120,8 @@ const CURATED_CAMS = [
     lat: 43.6632, lng: -1.4396,
     minWave: 3,
     ytSearch: "https://www.youtube.com/results?search_query=hossegor+surf+live+cam+france",
-    fallbackVideoId: "fNRvO8nZgGM",
+    // Hossegor clean offshore barrels Oct 2024 — verified public
+    fallbackVideoId: "O0EZpWawbnE",
     thumb: "https://images.unsplash.com/photo-1500514966906-fe245eea9344?w=200&h=120&fit=crop&q=80",
     tags: ["beach-break", "barrels"],
     desc: "Europe's most powerful beach break. Autumn Atlantic storms fire huge barrels."
@@ -125,7 +133,8 @@ const CURATED_CAMS = [
     lat: -17.9333, lng: 177.2,
     minWave: 6,
     ytSearch: "https://www.youtube.com/results?search_query=cloudbreak+fiji+surf+live",
-    fallbackVideoId: "aDfBfPVNvY4",
+    // Cloudbreak 6-10ft perfect swell March 2025 — verified public
+    fallbackVideoId: "LGfwd9DE3Zg",
     thumb: "https://images.unsplash.com/photo-1559494007-9f5847c49d94?w=200&h=120&fit=crop&q=80",
     tags: ["reef", "left-hander", "remote"],
     desc: "Remote tropical perfection. A reef-pass left stretching 300m, best April–October."
@@ -137,7 +146,8 @@ const CURATED_CAMS = [
     lat: 33.6550, lng: -118.0050,
     minWave: 2,
     ytSearch: "https://www.youtube.com/results?search_query=huntington+beach+surf+live+cam+pier",
-    fallbackVideoId: "PBJCOsRlSKI",
+    // Huntington Beach US Open 2024 highlights — verified public
+    fallbackVideoId: "8KSFyqNCX-I",
     thumb: "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=200&h=120&fit=crop&q=80",
     tags: ["beach-break", "surf-city"],
     desc: "Surf City USA. Home of the US Open of Surfing. Consistent year-round."
@@ -149,7 +159,8 @@ const CURATED_CAMS = [
     lat: 20.9389, lng: -156.1864,
     minWave: 15,
     ytSearch: "https://www.youtube.com/results?search_query=jaws+peahi+maui+surf+live+cam",
-    fallbackVideoId: "W--M3zHkFnw",
+    // Cloudbreak Fiji April 2026 — using as Jaws-style big wave content
+    fallbackVideoId: "sHg-CW5u_ZI",
     thumb: "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=200&h=120&fit=crop&q=80",
     tags: ["big-wave", "tow-in", "maui"],
     desc: "Peahi (Jaws) — one of the world's heaviest big-wave breaks. Only rideable by tow-in teams."
@@ -161,7 +172,8 @@ const CURATED_CAMS = [
     lat: -38.3693, lng: 144.2833,
     minWave: 4,
     ytSearch: "https://www.youtube.com/results?search_query=bells+beach+australia+surf+live+cam",
-    fallbackVideoId: "qGcWvBqDsKc",
+    // Ethan Ewing Snapper + Bells 2025 — verified public
+    fallbackVideoId: "ea13znzBFc8",
     thumb: "https://images.unsplash.com/photo-1484291470158-b8f8d608850d?w=200&h=120&fit=crop&q=80",
     tags: ["reef", "icon", "Easter"],
     desc: "Spiritual home of Australian surfing. Powerful reef break, host of the Rip Curl Pro since 1962."
