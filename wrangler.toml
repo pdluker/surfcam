@@ -6,7 +6,7 @@
 name            = "surfflow-scoring"
 main            = "worker/index.js"
 compatibility_date = "2024-01-01"
-account_id      = "YOUR_CLOUDFLARE_ACCOUNT_ID"   # paste from CF dashboard
+account_id      = "84ca5b3892da23a492a25b3ac1aa673f"   # paste from CF dashboard
 
 # ── Routes ──────────────────────────────────────────────────
 # This makes the worker respond to https://surfcam.stluker.com/api/*
@@ -25,7 +25,7 @@ crons = ["*/15 * * * *"]
 # Then paste the returned id below
 [[kv_namespaces]]
 binding  = "SURF_KV"
-id       = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
+id       = "13e61a90c0f3445790ae14e063ee0626"
 
 # ── Secrets (set via CLI, not stored here) ──────────────────
 # Run this after deploying:
