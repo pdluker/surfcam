@@ -3,238 +3,441 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#021420">
-<meta name="description" content="Live surf cams from around the world, ranked by wave conditions right now.">
+<meta name="theme-color" content="#010f1a">
+<meta name="description" content="Live surf conditions from around the world, ranked right now.">
 <title>🌊 SurfFlow</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
-  /* ─── TOKENS ─────────────────────────────────────────────── */
-  :root {
-    --bg:      #021420;
-    --card:    #041f30;
-    --surface: #062840;
-    --border:  #0d4060;
-    --foam:    #22d3ee;
-    --green:   #10b981;
-    --yellow:  #f59e0b;
-    --red:     #ef4444;
-    --white:   #f0faff;
-    --muted:   #5b8fa8;
-    --text:    #cce8f4;
-  }
+:root {
+  --ink:     #010f1a;
+  --deep:    #021623;
+  --surface: #052234;
+  --border:  #0a3550;
+  --foam:    #22d3ee;
+  --glow:    #0891b2;
+  --green:   #10b981;
+  --amber:   #f59e0b;
+  --red:     #ef4444;
+  --white:   #eef8ff;
+  --muted:   #4a7a96;
+  --text:    #b8dced;
+}
  
-  /* ─── RESET ──────────────────────────────────────────────── */
-  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html, body { height:100%; background:var(--bg); color:var(--white); font-family:'Barlow',sans-serif; overflow:hidden; }
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--ink);color:var(--white);font-family:'DM Sans',sans-serif;overflow:hidden;}
  
-  /* ─── LAYOUT ─────────────────────────────────────────────── */
-  #app { display:flex; flex-direction:column; height:100%; max-width:480px; margin:0 auto; }
+/* ── APP SHELL ── */
+#app{display:flex;flex-direction:column;height:100%;max-width:500px;margin:0 auto;position:relative;}
  
-  /* ─── TOP BAR ────────────────────────────────────────────── */
-  #topbar { flex-shrink:0; background:var(--card); border-bottom:1px solid var(--border); padding:10px 14px 8px; }
-  .tb1 { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
-  .logo { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1.5rem; color:var(--foam); letter-spacing:.02em; }
-  .logo span { color:var(--white); }
-  .live-badge { display:flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:.75rem; font-weight:700; color:var(--green); letter-spacing:.06em; }
-  .live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse 1.8s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
-  .counter { font-family:'Barlow Condensed',sans-serif; font-size:.85rem; color:var(--muted); }
-  .counter b { color:var(--foam); font-size:1.05rem; }
-  #loc-name { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.45rem; line-height:1.1; color:var(--white); }
-  #loc-region { font-size:.78rem; color:var(--muted); margin-top:1px; }
+/* ── HERO: CAM IS DOMINANT ─────────────────────────────────────
+   Cam takes 100% of viewport. Everything else overlays on top. */
+#hero{flex:1;position:relative;overflow:hidden;background:#000;min-height:0;}
  
-  /* ─── WAVE BAR ───────────────────────────────────────────── */
-  #wave-bar { flex-shrink:0; background:var(--surface); border-bottom:1px solid var(--border); padding:8px 14px; display:flex; align-items:center; gap:10px; }
-  #wave-emoji { font-size:1.75rem; flex-shrink:0; transition:opacity .3s; }
-  #wave-status { flex:1; min-width:0; }
-  #wave-hl { font-family:'Barlow Condensed',sans-serif; font-size:1.15rem; font-weight:700; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color .3s; }
-  #wave-detail { font-size:.75rem; color:var(--muted); margin-top:2px; }
-  #score-pill { font-family:'Barlow Condensed',sans-serif; font-size:1.2rem; font-weight:900; padding:5px 10px; border-radius:8px; border:2px solid; flex-shrink:0; visibility:hidden; transition:all .3s; }
-  .sf { color:#10b981; border-color:#10b981; background:#10b98118; }
-  .sg { color:#22d3ee; border-color:#22d3ee; background:#22d3ee12; }
-  .so { color:#f59e0b; border-color:#f59e0b; background:#f59e0b12; }
-  .sl { color:#ef4444; border-color:#ef4444; background:#ef444412; }
+#vframe{
+  position:absolute;inset:0;width:100%;height:100%;border:none;
+  z-index:1;
+}
  
-  /* ─── VIDEO AREA ─────────────────────────────────────────── */
-  #vwrap { flex:1; position:relative; overflow:hidden; background:#010d16; min-height:0; }
-  #vframe { position:absolute; inset:0; width:100%; height:100%; border:none; }
+/* ── TOP HUD — overlaid on cam ── */
+#top-hud{
+  position:absolute;top:0;left:0;right:0;z-index:10;
+  padding:14px 16px 0;
+  background:linear-gradient(to bottom,rgba(1,15,26,.85) 0%,rgba(1,15,26,.4) 60%,transparent 100%);
+  pointer-events:none;
+}
  
-  /* ─── BOTTOM GRADIENT + BUTTONS ─────────────────────────── */
-  #bottom-ui {
-    position:absolute; bottom:0; left:0; right:0; z-index:20;
-    background:linear-gradient(to top, rgba(2,20,32,.97) 50%, transparent);
-    padding:22px 14px 10px;
-    display:flex; flex-direction:column; align-items:center; gap:8px;
-    pointer-events:none;
-  }
+.hud-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
  
-  /* Big red YouTube button */
-  .yt-btn {
-    pointer-events:all;
-    background:#ff0000; color:#fff; border:none; border-radius:50px;
-    padding:15px 24px; font-family:'Barlow Condensed',sans-serif; font-size:1.15rem;
-    font-weight:800; letter-spacing:.06em; cursor:pointer;
-    display:flex; align-items:center; gap:10px;
-    width:100%; max-width:320px; justify-content:center;
-    box-shadow:0 4px 24px rgba(255,0,0,.4);
-    transition:transform .1s, opacity .1s;
-  }
-  .yt-btn:active { transform:scale(.97); opacity:.88; }
-  .yt-icon { font-size:1.35rem; }
+.logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.6rem;letter-spacing:.08em;
+  color:var(--foam);line-height:1;
+}
+.logo em{color:var(--white);font-style:normal;}
  
-  /* Live indicator on button */
-  .yt-live-pill {
-    font-size:.7rem; font-weight:700; padding:2px 6px; border-radius:4px;
-    background:rgba(255,255,255,.2); letter-spacing:.04em;
-  }
+.hud-right{display:flex;align-items:center;gap:8px;}
  
-  .sub-row { pointer-events:all; display:flex; gap:8px; width:100%; max-width:320px; }
-  .sub-btn {
-    flex:1; background:rgba(4,31,48,.92); border:1px solid var(--border);
-    color:var(--text); font-family:'Barlow Condensed',sans-serif;
-    font-size:.9rem; font-weight:600; padding:9px 12px; border-radius:50px;
-    cursor:pointer; letter-spacing:.04em; text-align:center;
-    transition:background .15s;
-  }
-  .sub-btn:active { background:var(--surface); }
+.live-chip{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.5);
+  border-radius:20px;padding:3px 9px;
+  font-size:.65rem;font-weight:500;letter-spacing:.1em;color:#fca5a5;
+  pointer-events:all;
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:blink 1.4s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
  
-  /* ─── LOADING SCREEN ─────────────────────────────────────── */
-  #lo {
-    position:absolute; inset:0; background:var(--bg); z-index:40;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
-    transition:opacity .5s;
-  }
-  #lo.hidden { opacity:0; pointer-events:none; }
-  .wl { display:flex; gap:5px; align-items:flex-end; height:36px; }
-  .wb { width:6px; background:var(--foam); border-radius:3px; animation:wr 1s ease-in-out infinite; }
-  .wb:nth-child(1){animation-delay:0s} .wb:nth-child(2){animation-delay:.15s}
-  .wb:nth-child(3){animation-delay:.3s} .wb:nth-child(4){animation-delay:.45s}
-  .wb:nth-child(5){animation-delay:.6s}
-  @keyframes wr { 0%,100%{height:8px;opacity:.35} 50%{height:32px;opacity:1} }
-  .lt { font-family:'Barlow Condensed',sans-serif; font-size:1.05rem; color:var(--muted); letter-spacing:.1em; }
-  #lo-status { font-size:.75rem; color:var(--muted); opacity:.7; letter-spacing:.05em; }
+.spot-counter{font-size:.75rem;color:var(--muted);font-weight:300;}
+.spot-counter b{color:var(--foam);font-weight:500;}
  
-  /* ─── TRANSITION FLASH ───────────────────────────────────── */
-  #flash { position:absolute; inset:0; background:var(--foam); opacity:0; pointer-events:none; z-index:30; transition:opacity .1s; }
-  #flash.on { opacity:.07; }
+/* Location name */
+#loc-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2.2rem;letter-spacing:.05em;line-height:1;
+  color:var(--white);
+  text-shadow:0 2px 12px rgba(0,0,0,.6);
+  margin-bottom:2px;
+}
+#loc-region{font-size:.75rem;color:rgba(184,220,237,.7);font-weight:300;letter-spacing:.02em;}
  
-  /* ─── FORECAST MODAL ─────────────────────────────────────── */
-  #modal {
-    position:absolute; inset:0; background:rgba(2,20,32,.97); z-index:50;
-    display:none; flex-direction:column; padding:20px; overflow-y:auto;
-  }
-  #modal.show { display:flex; }
-  .mhdr { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
-  .mtitle { font-family:'Barlow Condensed',sans-serif; font-size:1.65rem; font-weight:800; line-height:1.1; }
-  .mclose { background:var(--surface); border:1px solid var(--border); color:var(--white); font-size:1.2rem; width:42px; height:42px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .mclose:active { background:var(--border); }
-  .live-tag { display:inline-flex; align-items:center; gap:5px; font-size:.72rem; font-weight:700; color:var(--green); background:#10b98118; border:1px solid var(--green); border-radius:20px; padding:3px 9px; margin-bottom:10px; letter-spacing:.06em; }
-  .sgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
-  .scard { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; }
-  .slbl { font-size:.68rem; color:var(--muted); letter-spacing:.09em; text-transform:uppercase; margin-bottom:3px; }
-  .sval { font-family:'Barlow Condensed',sans-serif; font-size:1.5rem; font-weight:700; color:var(--foam); line-height:1; }
-  .ssub { font-size:.73rem; color:var(--muted); margin-top:2px; }
-  .fnote { background:var(--surface); border-left:3px solid var(--foam); border-radius:0 8px 8px 0; padding:12px 14px; font-size:.86rem; color:var(--text); line-height:1.6; margin-bottom:14px; }
-  .myt { background:#ff0000; color:#fff; border:none; border-radius:50px; padding:14px; font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:800; cursor:pointer; width:100%; margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:8px; }
-  .mnote { color:var(--muted); font-size:.7rem; text-align:center; }
+/* ── CONDITION BADGES ── */
+#condition-badges{
+  display:flex;flex-wrap:wrap;gap:6px;
+  margin-top:10px;
+  pointer-events:none;
+}
  
-  /* ─── NAV BUTTONS ────────────────────────────────────────── */
-  #nav { flex-shrink:0; display:grid; grid-template-columns:1fr 1fr; gap:2px; background:var(--border); border-top:1px solid var(--border); }
-  .nb { background:var(--card); border:none; color:var(--white); font-family:'Barlow Condensed',sans-serif; font-size:1.3rem; font-weight:700; letter-spacing:.05em; padding:18px 16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; min-height:68px; user-select:none; }
-  .nb:active { background:var(--surface); }
-  .ar { font-size:1.7rem; color:var(--foam); line-height:1; }
-  .nb.p { border-right:1px solid var(--border); }
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(2,22,35,.75);
+  backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;padding:5px 11px;
+  font-size:.72rem;font-weight:500;letter-spacing:.02em;
+  color:var(--white);
+  white-space:nowrap;
+}
+.badge.good{border-color:rgba(16,185,129,.4);color:#6ee7b7;}
+.badge.warn{border-color:rgba(245,158,11,.4);color:#fcd34d;}
+.badge.bad {border-color:rgba(239,68,68,.3);color:#fca5a5;}
+.badge.info{border-color:rgba(34,211,238,.3);color:#a5f3fc;}
  
-  /* ─── THUMBNAIL STRIP ────────────────────────────────────── */
-  #ts { flex-shrink:0; background:var(--bg); border-top:1px solid var(--border); padding:8px 10px; display:flex; gap:7px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-  #ts::-webkit-scrollbar { display:none; }
-  .th { flex-shrink:0; scroll-snap-align:start; width:78px; cursor:pointer; border-radius:7px; overflow:hidden; border:2px solid transparent; transition:border-color .2s, transform .15s; position:relative; }
-  .th.active { border-color:var(--foam); transform:scale(1.06); }
-  .thi { width:100%; height:50px; object-fit:cover; display:block; background:var(--surface); }
-  .thl { background:var(--card); font-family:'Barlow Condensed',sans-serif; font-size:.58rem; font-weight:600; color:var(--text); padding:3px 4px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .ths { position:absolute; top:3px; right:3px; font-family:'Barlow Condensed',sans-serif; font-size:.62rem; font-weight:700; padding:1px 4px; border-radius:3px; background:rgba(0,0,0,.78); }
-  .th-live-dot { position:absolute; top:3px; left:3px; width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse 1.8s ease-in-out infinite; }
+/* ── AI SESSION RATING ── */
+#ai-rating{
+  position:absolute;top:14px;right:16px;z-index:10;
+  background:rgba(2,22,35,.82);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(34,211,238,.2);
+  border-radius:12px;
+  padding:10px 13px;
+  text-align:center;
+  min-width:72px;
+  pointer-events:none;
+}
+#ai-score{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2rem;letter-spacing:.04em;
+  line-height:1;
+  color:var(--foam);
+}
+#ai-label{font-size:.55rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-top:2px;}
+#ai-verdict{font-size:.65rem;color:var(--text);margin-top:3px;line-height:1.3;max-width:80px;}
  
-  /* ─── ERROR STATE ────────────────────────────────────────── */
-  #error-screen { position:absolute; inset:0; background:var(--bg); z-index:35; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:32px; }
-  #error-screen.show { display:flex; }
-  .err-icon { font-size:3.5rem; }
-  .err-title { font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:700; color:var(--muted); }
-  .err-sub { font-size:.88rem; color:var(--muted); line-height:1.5; max-width:280px; }
-  .retry-btn { background:var(--surface); border:1px solid var(--border); color:var(--foam); font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; padding:12px 28px; border-radius:50px; cursor:pointer; letter-spacing:.05em; }
+/* ── BOTTOM HUD — overlaid on cam ── */
+#bottom-hud{
+  position:absolute;bottom:0;left:0;right:0;z-index:10;
+  padding:0 14px 10px;
+  background:linear-gradient(to top,rgba(1,15,26,.95) 0%,rgba(1,15,26,.6) 50%,transparent 100%);
+}
  
-  /* ─── DESKTOP FRAME ──────────────────────────────────────── */
-  @media (min-width:481px) {
-    body { background:#010e18; }
-    #app { border-left:1px solid var(--border); border-right:1px solid var(--border); box-shadow:0 0 80px #0891b228; }
-  }
+/* Personality banner */
+#personality{
+  font-size:.8rem;font-style:italic;font-weight:300;
+  color:rgba(184,220,237,.75);
+  padding:8px 0 10px;
+  line-height:1.4;
+  min-height:2.4em;
+}
+ 
+/* Score + headline row */
+.score-row{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:8px;
+}
+#wave-headline{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.6rem;letter-spacing:.04em;
+  line-height:1;flex:1;
+}
+#score-bar{
+  display:flex;flex-direction:column;align-items:flex-end;gap:1px;
+}
+#score-num-lg{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.4rem;line-height:1;
+}
+#score-sub{font-size:.6rem;color:var(--muted);letter-spacing:.06em;}
+ 
+/* Condition row — compact */
+#cond-row{
+  display:flex;gap:14px;
+  margin-bottom:12px;
+  font-size:.72rem;color:var(--text);
+}
+.cond-item{display:flex;align-items:center;gap:4px;}
+.cond-icon{font-size:.85rem;}
+.cond-label{font-size:.62rem;color:var(--muted);display:block;line-height:1;}
+.cond-val{font-weight:500;display:block;line-height:1.2;}
+ 
+/* Action buttons */
+#action-row{
+  display:flex;gap:8px;
+  margin-bottom:8px;
+}
+ 
+.yt-btn{
+  flex:1;
+  background:#ff0000;color:#fff;border:none;border-radius:10px;
+  padding:13px 16px;
+  font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;
+  letter-spacing:.03em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  box-shadow:0 4px 20px rgba(255,0,0,.35);
+  transition:transform .1s,opacity .1s;
+}
+.yt-btn:active{transform:scale(.97);}
+ 
+.icon-btn{
+  background:rgba(5,34,52,.9);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:10px;
+  padding:13px 14px;
+  font-size:1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+  flex-shrink:0;
+}
+.icon-btn:active{background:var(--surface);}
+ 
+/* ── NAV STRIP ── */
+#nav-strip{
+  flex-shrink:0;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:2px;background:var(--border);
+  border-top:1px solid var(--border);
+}
+.nav-btn{
+  background:var(--deep);border:none;
+  color:var(--white);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.2rem;letter-spacing:.08em;
+  padding:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  min-height:60px;user-select:none;
+  transition:background .12s;
+}
+.nav-btn:active{background:var(--surface);}
+.nav-ar{font-size:1.5rem;color:var(--foam);}
+.nav-btn.p{border-right:1px solid var(--border);}
+ 
+/* ── THUMB STRIP ── */
+#ts{
+  flex-shrink:0;background:var(--ink);
+  border-top:1px solid var(--border);
+  padding:8px 10px;
+  display:flex;gap:7px;
+  overflow-x:auto;scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+#ts::-webkit-scrollbar{display:none;}
+.th{
+  flex-shrink:0;scroll-snap-align:start;width:76px;
+  cursor:pointer;border-radius:8px;overflow:hidden;
+  border:2px solid transparent;
+  transition:border-color .2s,transform .15s;position:relative;
+}
+.th.active{border-color:var(--foam);transform:scale(1.06);}
+.thi{width:100%;height:48px;object-fit:cover;display:block;background:var(--surface);}
+.thl{
+  background:var(--deep);
+  font-size:.58rem;font-weight:500;color:var(--text);
+  padding:3px 4px;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ths{
+  position:absolute;top:3px;right:3px;
+  font-family:'Bebas Neue',sans-serif;font-size:.7rem;
+  padding:1px 4px;border-radius:3px;background:rgba(0,0,0,.8);
+}
+.th-live{position:absolute;top:3px;left:3px;width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 1.4s ease-in-out infinite;}
+ 
+/* ── LOADING ── */
+#lo{
+  position:absolute;inset:0;background:var(--ink);z-index:40;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  transition:opacity .5s;
+}
+#lo.hidden{opacity:0;pointer-events:none;}
+.wl{display:flex;gap:5px;align-items:flex-end;height:32px;}
+.wb{width:5px;background:var(--foam);border-radius:3px;animation:wr 1s ease-in-out infinite;}
+.wb:nth-child(1){animation-delay:0s}.wb:nth-child(2){animation-delay:.15s}
+.wb:nth-child(3){animation-delay:.3s}.wb:nth-child(4){animation-delay:.45s}
+.wb:nth-child(5){animation-delay:.6s}
+@keyframes wr{0%,100%{height:6px;opacity:.3}50%{height:28px;opacity:1}}
+.lo-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.12em;color:var(--muted);}
+#lo-status{font-size:.72rem;color:var(--muted);opacity:.6;letter-spacing:.04em;}
+ 
+/* ── FLASH ── */
+#flash{position:absolute;inset:0;background:var(--foam);opacity:0;pointer-events:none;z-index:20;transition:opacity .08s;}
+#flash.on{opacity:.06;}
+ 
+/* ── MODAL ── */
+#modal{
+  position:absolute;inset:0;background:rgba(1,15,26,.97);z-index:50;
+  display:none;flex-direction:column;padding:20px;overflow-y:auto;
+}
+#modal.show{display:flex;}
+.mhdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;}
+.mtitle{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:.04em;line-height:1;}
+.mclose{
+  background:var(--surface);border:1px solid var(--border);color:var(--white);
+  font-size:1.1rem;width:40px;height:40px;border-radius:50%;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+ 
+/* AI Rating in modal */
+.ai-block{
+  background:linear-gradient(135deg,rgba(8,145,178,.15),rgba(16,185,129,.08));
+  border:1px solid rgba(34,211,238,.2);
+  border-radius:12px;padding:16px;margin-bottom:14px;
+}
+.ai-block-title{font-size:.65rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+.ai-block-score{font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--foam);line-height:1;margin-bottom:4px;}
+.ai-block-verdict{font-size:.85rem;color:var(--text);line-height:1.5;margin-bottom:10px;}
+.ai-block-window{font-size:.75rem;color:var(--muted);font-style:italic;}
+ 
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.slbl{font-size:.65rem;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;margin-bottom:3px;}
+.sval{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--foam);line-height:1;}
+.ssub{font-size:.7rem;color:var(--muted);margin-top:2px;}
+ 
+.vis-badges{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;}
+ 
+.fnote{
+  background:var(--surface);border-left:3px solid var(--foam);
+  border-radius:0 8px 8px 0;padding:12px 14px;
+  font-size:.84rem;color:var(--text);line-height:1.6;margin-bottom:14px;
+}
+.myt{
+  background:#ff0000;color:#fff;border:none;border-radius:10px;
+  padding:14px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:500;
+  cursor:pointer;width:100%;margin-bottom:10px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.mnote{color:var(--muted);font-size:.68rem;text-align:center;line-height:1.5;}
+ 
+/* ── AMBIENT MODE ── */
+#ambient-overlay{
+  position:fixed;inset:0;z-index:100;
+  background:#000;
+  display:none;flex-direction:column;
+}
+#ambient-overlay.show{display:flex;}
+ 
+#ambient-frame{
+  flex:1;border:none;width:100%;
+}
+ 
+#ambient-ui{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
+  padding:30px 20px 20px;
+  display:flex;align-items:flex-end;justify-content:space-between;
+  opacity:0;transition:opacity .3s;
+}
+#ambient-overlay:hover #ambient-ui,
+#ambient-overlay.touch-active #ambient-ui{opacity:1;}
+ 
+.ambient-loc{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2rem;letter-spacing:.06em;color:#fff;
+}
+.ambient-cond{font-size:.8rem;color:rgba(255,255,255,.6);margin-top:2px;}
+ 
+.ambient-exit{
+  background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.2);
+  color:#fff;border-radius:50px;
+  padding:10px 18px;font-size:.82rem;font-weight:500;
+  cursor:pointer;
+  backdrop-filter:blur(8px);
+}
+ 
+/* ── ERROR ── */
+#err{
+  position:absolute;inset:0;background:var(--ink);z-index:35;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;text-align:center;padding:32px;
+}
+#err.show{display:flex;}
+.err-ico{font-size:3rem;}
+.err-title{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.06em;color:var(--muted);}
+.err-sub{font-size:.84rem;color:var(--muted);line-height:1.5;max-width:260px;}
+.retry{
+  background:var(--surface);border:1px solid var(--border);color:var(--foam);
+  font-size:.9rem;font-weight:500;padding:11px 26px;border-radius:50px;cursor:pointer;
+}
+ 
+@media(min-width:501px){
+  body{background:#010a12;}
+  #app{border-left:1px solid var(--border);border-right:1px solid var(--border);box-shadow:0 0 60px rgba(8,145,178,.15);}
+}
 </style>
 </head>
 <body>
+ 
 <div id="app">
  
-  <!-- TOP BAR -->
-  <div id="topbar">
-    <div class="tb1">
-      <div class="logo">🌊<span>SURF</span>FLOW</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="live-badge" id="live-badge" style="display:none">
-          <div class="live-dot"></div>LIVE CAMS
-        </div>
-        <div class="counter"><b id="cc">—</b> of <span id="ct">—</span></div>
-      </div>
-    </div>
-    <div id="loc-name">Loading best surf...</div>
-    <div id="loc-region">Fetching live wave data</div>
-  </div>
- 
-  <!-- WAVE BAR -->
-  <div id="wave-bar">
-    <div id="wave-emoji">🌊</div>
-    <div id="wave-status">
-      <div id="wave-hl" style="color:var(--muted)">Checking conditions...</div>
-      <div id="wave-detail">Scoring wave forecasts globally</div>
-    </div>
-    <div id="score-pill" class="sg"><span id="snum">—</span></div>
-  </div>
- 
-  <!-- VIDEO AREA -->
-  <div id="vwrap">
+  <!-- ── HERO: CAM DOMINANT ── -->
+  <div id="hero">
     <iframe id="vframe" src="" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Surf Cam"></iframe>
  
-    <!-- BOTTOM UI — YouTube button always visible -->
-    <div id="bottom-ui">
-      <button class="yt-btn" id="yt-btn">
-        <span class="yt-icon">▶</span>
-        <span id="yt-btn-text">WATCH ON YOUTUBE</span>
-        <span class="yt-live-pill" id="live-pill" style="display:none">LIVE</span>
-      </button>
-      <div class="sub-row">
-        <button class="sub-btn" onclick="showModal()">📊 Wave Info</button>
-        <button class="sub-btn" id="auto-btn" onclick="toggleAuto()">⏩ Auto: OFF</button>
+    <!-- TOP HUD overlaid -->
+    <div id="top-hud">
+      <div class="hud-row1">
+        <div class="logo">🌊 <em>SURF</em>FLOW</div>
+        <!-- AI rating top-right -->
+        <div id="ai-rating">
+          <div id="ai-score">—</div>
+          <div id="ai-label">Session</div>
+          <div id="ai-verdict"></div>
+        </div>
+      </div>
+      <div id="loc-name">Loading...</div>
+      <div id="loc-region">Finding best surf</div>
+      <div id="condition-badges"></div>
+    </div>
+ 
+    <!-- BOTTOM HUD overlaid -->
+    <div id="bottom-hud">
+      <div id="personality"></div>
+      <div class="score-row">
+        <div id="wave-headline">—</div>
+        <div id="score-bar">
+          <div id="score-num-lg" style="color:var(--foam)">—</div>
+          <div id="score-sub">/ 100</div>
+        </div>
+      </div>
+      <div id="cond-row"></div>
+      <div id="action-row">
+        <button class="yt-btn" id="yt-btn">
+          <span>▶</span>
+          <span id="yt-label">WATCH ON YOUTUBE</span>
+        </button>
+        <button class="icon-btn" onclick="showModal()" title="Wave Info">📊</button>
+        <button class="icon-btn" id="ambient-btn" onclick="enterAmbient()" title="Ambient Mode">🎧</button>
+        <button class="icon-btn" id="auto-btn" onclick="toggleAuto()" title="Auto-advance">⏩</button>
       </div>
     </div>
  
     <!-- LOADING -->
     <div id="lo">
-      <div class="wl">
-        <div class="wb"></div><div class="wb"></div><div class="wb"></div>
-        <div class="wb"></div><div class="wb"></div>
-      </div>
-      <div class="lt">FINDING BEST SURF</div>
+      <div class="wl"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
+      <div class="lo-title">FINDING BEST SURF</div>
       <div id="lo-status">Fetching live wave data...</div>
     </div>
  
     <!-- ERROR -->
-    <div id="error-screen">
-      <div class="err-icon">📡</div>
-      <div class="err-title">Couldn't load surf data</div>
-      <div class="err-sub">Check your connection and try again. The wave scoring worker may be warming up.</div>
-      <button class="retry-btn" onclick="init()">Try Again</button>
+    <div id="err">
+      <div class="err-ico">📡</div>
+      <div class="err-title">Can't Load Feed</div>
+      <div class="err-sub">Check your connection. The scoring worker may be warming up.</div>
+      <button class="retry" onclick="init()">Try Again</button>
     </div>
  
-    <!-- TRANSITION FLASH -->
     <div id="flash"></div>
  
     <!-- FORECAST MODAL -->
@@ -242,90 +445,224 @@
       <div class="mhdr">
         <div>
           <div class="mtitle" id="mtitle">Wave Info</div>
-          <div style="color:var(--muted);font-size:.8rem;margin-top:3px" id="mreg"></div>
-          <div class="live-tag" id="mlive" style="display:none"><div class="live-dot"></div>STREAMING LIVE NOW</div>
+          <div style="color:var(--muted);font-size:.78rem;margin-top:2px" id="mreg"></div>
         </div>
         <button class="mclose" onclick="hideModal()">✕</button>
       </div>
+ 
+      <!-- AI Block -->
+      <div class="ai-block">
+        <div class="ai-block-title">AI Session Rating</div>
+        <div class="ai-block-score" id="mai-score">—</div>
+        <div class="ai-block-verdict" id="mai-verdict"></div>
+        <div class="ai-block-window" id="mai-window"></div>
+      </div>
+ 
+      <!-- Visual badges in modal -->
+      <div class="vis-badges" id="vis-badges"></div>
+ 
       <div class="sgrid" id="sgrid"></div>
       <div class="fnote" id="fnote"></div>
-      <button class="myt" id="myt-btn"><span>▶</span> WATCH ON YOUTUBE</button>
+      <button class="myt" id="myt-btn"><span>▶</span> Watch on YouTube</button>
       <div class="mnote">
-        Wave data: Open-Meteo Marine API · Updated every 15 min<br>
-        Live streams: YouTube Data API · surfcam.stluker.com
+        Wave data: Open-Meteo Marine API · Ranked every 15 min<br>
+        surfcam.stluker.com
       </div>
     </div>
-  </div><!-- /vwrap -->
+  </div><!-- /hero -->
  
-  <!-- NAV BUTTONS -->
-  <div id="nav">
-    <button class="nb p" onclick="navigate(-1)"><span class="ar">←</span> PREV SPOT</button>
-    <button class="nb"   onclick="navigate(1)">NEXT SPOT <span class="ar">→</span></button>
+  <!-- ── NAV STRIP ── -->
+  <div id="nav-strip">
+    <button class="nav-btn p" onclick="navigate(-1)"><span class="nav-ar">←</span> PREV</button>
+    <button class="nav-btn"   onclick="navigate(1)">NEXT <span class="nav-ar">→</span></button>
   </div>
  
-  <!-- THUMBNAIL STRIP -->
+  <!-- ── THUMBNAIL STRIP ── -->
   <div id="ts"></div>
  
 </div><!-- /app -->
  
+<!-- ── AMBIENT MODE OVERLAY ── -->
+<div id="ambient-overlay">
+  <iframe id="ambient-frame" src="" allow="autoplay; encrypted-media" title="Ambient surf"></iframe>
+  <div id="ambient-ui">
+    <div>
+      <div class="ambient-loc" id="ambient-loc"></div>
+      <div class="ambient-cond" id="ambient-cond"></div>
+    </div>
+    <button class="ambient-exit" onclick="exitAmbient()">Exit Ambient</button>
+  </div>
+</div>
+ 
 <script>
-// ═══════════════════════════════════════════════════════════════
-//  CONFIG — update API_URL after deploying the Worker
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════════
 const API_URL   = "https://surfcam.stluker.com/api/feed";
 const AUTO_SECS = 60;
  
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  STATE
-// ═══════════════════════════════════════════════════════════════
-let cams     = [];   // ranked cam list from API
-let idx      = 0;
-let autoOn   = false;
-let autoTimer= null;
-let feedMeta = {};
+// ══════════════════════════════════════════════════════════
+let cams = [], idx = 0, autoOn = false, autoTimer = null, feedMeta = {};
  
-// ═══════════════════════════════════════════════════════════════
-//  FETCH SCORED FEED FROM WORKER
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════
+function scoreCls(s){ return s>=80?'sf':s>=60?'sg':s>=40?'so':'sl'; }
+function scoreColor(s){ return s>=80?'#10b981':s>=60?'#22d3ee':s>=40?'#f59e0b':'#ef4444'; }
+function compass(d){ return ['N','NE','E','SE','S','SW','W','NW'][Math.round(d/45)%8]; }
+ 
+// ── AI SESSION RATING ──────────────────────────────────────
+function aiRating(cam) {
+  const f = cam.forecast;
+  const s = cam.score ?? 50;
+  const name = cam.name;
+ 
+  // Score label
+  const label = s>=85?'EPIC':s>=70?'FIRING':s>=55?'SOLID':s>=40?'DECENT':s>=25?'SMALL':'FLAT';
+ 
+  // Verdict — personality-driven interpretation
+  const verdicts = {
+    sf: [
+      `${name} is on fire right now. Clean ground swell, light winds — conditions don't get much better than this.`,
+      `Exceptional session conditions. If you're near ${name}, you already know.`,
+      `Peak surf window right now. ${f?f.waveHeightFt+'ft':'Clean'} and${f&&f.periodSec>13?' long-period':''} building.`
+    ],
+    sg: [
+      `Solid morning at ${name}. Swell's holding, wind's behaving.`,
+      `${f?f.waveHeightFt+'ft':'Good waves'} with nice shape — this one's worth watching.`,
+      `Above average conditions. The early crowd at ${name} made the right call.`
+    ],
+    so: [
+      `Decent surf showing at ${name}. Not epic, but there's fun to be had.`,
+      `${f?f.waveHeightFt+'ft':'Small but' } — workable. Good day for intermediate surfers.`,
+      `Conditions are okay. Not firing, but there's something in the water.`
+    ],
+    sl: [
+      `Quiet day at ${name}. Swell's backing off — great time to check the scenery.`,
+      `It's small today. Even the locals are sleeping in.`,
+      `Waiting on the next swell. Enjoy the view.`
+    ]
+  };
+  const cls = scoreCls(s);
+  const arr = verdicts[cls];
+  const verdict = arr[Math.floor(Date.now() / 3600000) % arr.length];
+ 
+  // Best window — based on score and time of day
+  const now = new Date();
+  const h = now.getHours();
+  let window = '';
+  if (s >= 60) {
+    const start = h < 9 ? '6:00–9:00 AM' : h < 14 ? 'Now through midday' : 'Now until sunset';
+    window = `Best window: ${start}`;
+  } else if (s >= 40) {
+    window = 'Conditions holding through the afternoon';
+  } else {
+    window = 'Check back after the next swell cycle';
+  }
+ 
+  return { score: s, label, verdict, window };
+}
+ 
+// ── CONDITION BADGES ───────────────────────────────────────
+function conditionBadges(cam) {
+  const f = cam.forecast;
+  if (!f) return [];
+  const badges = [];
+ 
+  // Wind quality (using swell vs wind wave ratio)
+  const swellRatio = f.waveHeightFt > 0 ? f.swellHeightFt / f.waveHeightFt : 0;
+  if (swellRatio > 0.8)      badges.push({icon:'💨', text:'Offshore → Clean', cls:'good'});
+  else if (swellRatio > 0.5) badges.push({icon:'💨', text:'Light winds', cls:'info'});
+  else                        badges.push({icon:'💨', text:'Wind chop', cls:'warn'});
+ 
+  // Period quality
+  if (f.periodSec >= 14)      badges.push({icon:'🌊', text:`${f.periodSec}s — Long period`, cls:'good'});
+  else if (f.periodSec >= 10) badges.push({icon:'🌊', text:`${f.periodSec}s — Med period`, cls:'info'});
+  else                        badges.push({icon:'🌊', text:`${f.periodSec}s — Short`, cls:'warn'});
+ 
+  // Wave height vs spot minimum
+  if (f.waveHeightFt >= cam.minWave * 1.5) badges.push({icon:'📏', text:`${f.waveHeightFt}ft — Pumping`, cls:'good'});
+  else if (f.waveHeightFt >= cam.minWave)   badges.push({icon:'📏', text:`${f.waveHeightFt}ft — Rideable`, cls:'info'});
+  else                                       badges.push({icon:'📏', text:`${f.waveHeightFt}ft — Small`, cls:'warn'});
+ 
+  // Direction
+  const dir = compass(f.directionDeg);
+  badges.push({icon:'🧭', text:`${dir} swell`, cls:'info'});
+ 
+  return badges;
+}
+ 
+function renderBadges(badges, container) {
+  container.innerHTML = badges.map(b =>
+    `<span class="badge ${b.cls}">${b.icon} ${b.text}</span>`
+  ).join('');
+}
+ 
+// ── PERSONALITY BANNERS ────────────────────────────────────
+function personalityBanner(cam) {
+  const s = cam.score ?? 50;
+  const f = cam.forecast;
+  const h = new Date().getHours();
+ 
+  const banners = {
+    sf: [
+      "Glassy morning conditions are showing up.",
+      "Clean ground swell, light winds — the early crew called it right.",
+      `${f?f.waveHeightFt+'ft':''} and building. Today's the day.`
+    ],
+    sg: [
+      "Solid waves out there. Worth a look.",
+      "Wind's behaving today. Swell's holding.",
+      "Good shape on the sets. Crowds will follow."
+    ],
+    so: [
+      "Small but clean. The dawn patrol might've had it better.",
+      "Workable surf showing. Not epic, but something.",
+      "Wind's picking up — the early session had the better call."
+    ],
+    sl: [
+      "Small today. Even the locals are sleeping in.",
+      "Waiting on the next swell cycle.",
+      "Quiet day at the break. Check back tomorrow."
+    ]
+  };
+ 
+  const cls = scoreCls(s);
+  const arr = banners[cls];
+  return arr[Math.floor(Date.now() / 1800000) % arr.length];
+}
+ 
+// ══════════════════════════════════════════════════════════
+//  FEED
+// ══════════════════════════════════════════════════════════
 async function fetchFeed() {
-  setLoadStatus("Contacting scoring worker...");
-  const res  = await fetch(API_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Feed returned ${res.status}`);
+  const res = await fetch(API_URL, { cache:'no-store' });
+  if (!res.ok) throw new Error(`Feed ${res.status}`);
   const data = await res.json();
   cams = data.cams || [];
-  feedMeta = { generatedAt: data.generatedAt, liveCount: data.liveCount, totalCams: data.totalCams };
+  feedMeta = { generatedAt: data.generatedAt, liveCount: data.liveCount };
   return data;
 }
  
-function setLoadStatus(msg) {
-  const el = document.getElementById("lo-status");
-  if (el) el.textContent = msg;
-}
+function setLoadStatus(msg){ const el=document.getElementById('lo-status'); if(el)el.textContent=msg; }
  
-// ═══════════════════════════════════════════════════════════════
-//  SCORE → UI HELPERS
-// ═══════════════════════════════════════════════════════════════
-function scoreCls(s) { return s >= 80 ? "sf" : s >= 60 ? "sg" : s >= 40 ? "so" : "sl"; }
-function scoreEmoji(s){ return s >= 80 ? "🔥" : s >= 60 ? "🌊" : s >= 40 ? "〰️" : "😴"; }
-function compass(d)  { return ["N","NE","E","SE","S","SW","W","NW"][Math.round(d/45)%8]; }
-function scoreColor(s){ return s>=80?"#10b981":s>=60?"var(--foam)":s>=40?"#f59e0b":"var(--muted)"; }
- 
-// ═══════════════════════════════════════════════════════════════
-//  RENDER THUMBNAIL STRIP
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════════
 function renderThumbs() {
-  const strip = document.getElementById("ts");
-  strip.innerHTML = "";
+  const strip = document.getElementById('ts');
+  strip.innerHTML = '';
   cams.forEach((cam, i) => {
-    const sc  = cam.score ?? 50;
-    const cl  = scoreCls(sc);
-    const col = sc>=80?"#10b981":sc>=60?"#22d3ee":sc>=40?"#f59e0b":"#ef4444";
-    const d   = document.createElement("div");
-    d.className = "th" + (i===idx ? " active" : "");
+    const sc = cam.score ?? 50;
+    const col = scoreColor(sc);
+    const d = document.createElement('div');
+    d.className = 'th' + (i===idx?' active':'');
     d.innerHTML = `
-      ${cam.isLive ? '<div class="th-live-dot"></div>' : ""}
-      <img class="thi" src="${cam.thumb || ""}" alt="${cam.name}"
-        onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2278%22 height=%2250%22><rect width=%2278%22 height=%2250%22 fill=%22%23062840%22/><text x=%2250%25%22 y=%2255%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2222%22>🌊</text></svg>'">
+      ${cam.isLive?'<div class="th-live"></div>':''}
+      <img class="thi" src="${cam.thumb||''}" alt="${cam.name}"
+        onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2276%22 height=%2248%22><rect width=%2276%22 height=%2248%22 fill=%22%23052234%22/><text x=%2250%25%22 y=%2256%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2220%22>🌊</text></svg>'">
       <div class="ths" style="color:${col}">${sc}</div>
       <div class="thl">${cam.name}</div>`;
     d.onclick = () => goTo(i);
@@ -333,240 +670,239 @@ function renderThumbs() {
   });
 }
  
-function syncThumbActive() {
-  document.querySelectorAll(".th").forEach((t, i) => t.classList.toggle("active", i===idx));
-  const a = document.querySelector(".th.active");
-  if (a) a.scrollIntoView({ behavior:"smooth", block:"nearest", inline:"center" });
+function syncThumbs() {
+  document.querySelectorAll('.th').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  const a = document.querySelector('.th.active');
+  if (a) a.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
 }
  
-// ═══════════════════════════════════════════════════════════════
-//  LOAD A CAMERA INTO THE PLAYER
-// ═══════════════════════════════════════════════════════════════
 function loadCam(cam) {
-  // Top bar
-  document.getElementById("loc-name").textContent    = cam.name;
-  document.getElementById("loc-region").textContent  = cam.region;
-  document.getElementById("cc").textContent          = idx + 1;
-  document.getElementById("ct").textContent          = cams.length;
+  // Location
+  document.getElementById('loc-name').textContent = cam.name;
+  document.getElementById('loc-region').textContent = cam.region;
  
-  // Wave bar
-  const whl = document.getElementById("wave-hl");
-  whl.textContent = cam.waveHeadline || "Checking conditions...";
-  whl.style.color = scoreColor(cam.score);
-  document.getElementById("wave-detail").textContent = cam.waveDetail || "No forecast data";
-  document.getElementById("wave-emoji").textContent  = scoreEmoji(cam.score ?? 50);
+  // AI Rating — top right
+  const ai = aiRating(cam);
+  const aiEl = document.getElementById('ai-score');
+  aiEl.textContent = ai.score;
+  aiEl.style.color = scoreColor(ai.score);
+  document.getElementById('ai-label').textContent = ai.label;
+  document.getElementById('ai-verdict').textContent = '';
  
-  const pill = document.getElementById("score-pill");
-  pill.className = scoreCls(cam.score ?? 50);
-  pill.style.visibility = "";
-  document.getElementById("snum").textContent = cam.score ?? "—";
+  // Wave headline
+  const hl = document.getElementById('wave-headline');
+  hl.textContent = cam.waveHeadline || '—';
+  hl.style.color = scoreColor(cam.score);
  
-  // Live badge
-  const liveBadge = document.getElementById("live-badge");
-  liveBadge.style.display = feedMeta.liveCount > 0 ? "flex" : "none";
+  // Score bar
+  const snl = document.getElementById('score-num-lg');
+  snl.textContent = cam.score ?? '—';
+  snl.style.color = scoreColor(cam.score);
  
-  // YouTube button
-  const ytUrl = cam.ytSearch || `https://www.youtube.com/watch?v=${cam.videoId}`;
-  document.getElementById("yt-btn").onclick = () => window.open(ytUrl, "_blank");
-  document.getElementById("myt-btn").onclick = () => window.open(ytUrl, "_blank");
+  // Condition badges (top hud)
+  const badges = conditionBadges(cam);
+  renderBadges(badges, document.getElementById('condition-badges'));
  
-  const livePill = document.getElementById("live-pill");
-  const btnText  = document.getElementById("yt-btn-text");
-  if (cam.isLive) {
-    livePill.style.display = "inline";
-    btnText.textContent    = "WATCH LIVE ON YOUTUBE";
+  // Condition row
+  const f = cam.forecast;
+  const condRow = document.getElementById('cond-row');
+  if (f) {
+    condRow.innerHTML = `
+      <div class="cond-item"><span class="cond-icon">📏</span><div><span class="cond-label">Height</span><span class="cond-val">${f.waveHeightFt}ft</span></div></div>
+      <div class="cond-item"><span class="cond-icon">⏱</span><div><span class="cond-label">Period</span><span class="cond-val">${f.periodSec}s</span></div></div>
+      <div class="cond-item"><span class="cond-icon">🧭</span><div><span class="cond-label">Direction</span><span class="cond-val">${compass(f.directionDeg)}</span></div></div>
+      <div class="cond-item"><span class="cond-icon">🌊</span><div><span class="cond-label">Swell</span><span class="cond-val">${f.swellHeightFt}ft</span></div></div>`;
   } else {
-    livePill.style.display = "none";
-    btnText.textContent    = "WATCH ON YOUTUBE";
+    condRow.innerHTML = '';
   }
  
-  // Load iframe — brief blank src reset prevents flash of old content
-  const frame = document.getElementById("vframe");
-  frame.src = "";
+  // Personality banner
+  document.getElementById('personality').textContent = personalityBanner(cam);
+ 
+  // YouTube button
+  const ytUrl = cam.ytSearch || `https://www.youtube.com/results?search_query=${encodeURIComponent(cam.name+' surf live')}`;
+  document.getElementById('yt-btn').onclick = () => window.open(ytUrl, '_blank');
+  document.getElementById('myt-btn').onclick = () => window.open(ytUrl, '_blank');
+  document.getElementById('yt-label').textContent = cam.isLive ? 'WATCH LIVE' : 'WATCH ON YOUTUBE';
+ 
+  // Ambient button
+  document.getElementById('ambient-btn').onclick = () => enterAmbient(cam);
+ 
+  // Load iframe
+  const frame = document.getElementById('vframe');
+  frame.src = '';
   setTimeout(() => {
-    // Windy embed works on any domain — no API key, no embedding restrictions
     frame.src = cam.embedUrl ||
       `https://www.youtube.com/embed/${cam.videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1&playsinline=1`;
   }, 60);
  
-  syncThumbActive();
+  syncThumbs();
 }
  
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  NAVIGATION
-// ═══════════════════════════════════════════════════════════════
-function doFlash() {
-  const f = document.getElementById("flash");
-  f.classList.add("on");
-  setTimeout(() => f.classList.remove("on"), 130);
-}
+// ══════════════════════════════════════════════════════════
+function doFlash(){ const f=document.getElementById('flash');f.classList.add('on');setTimeout(()=>f.classList.remove('on'),130); }
  
 function goTo(i) {
   if (!cams.length) return;
   if (i < 0) i = cams.length - 1;
   if (i >= cams.length) i = 0;
-  idx = i;
-  doFlash();
-  loadCam(cams[idx]);
+  idx = i; doFlash(); loadCam(cams[idx]);
 }
+function navigate(dir){ goTo(idx + dir); }
  
-function navigate(dir) { goTo(idx + dir); }
- 
-// ═══════════════════════════════════════════════════════════════
-//  AUTO-ADVANCE
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+//  AUTO ADVANCE
+// ══════════════════════════════════════════════════════════
 function toggleAuto() {
   autoOn = !autoOn;
-  document.getElementById("auto-btn").textContent = autoOn ? "⏩ Auto: ON" : "⏩ Auto: OFF";
-  if (autoOn) {
-    autoTimer = setInterval(() => goTo(idx + 1), AUTO_SECS * 1000);
-  } else {
-    clearInterval(autoTimer);
-  }
+  document.getElementById('auto-btn').textContent = autoOn ? '⏸' : '⏩';
+  document.getElementById('auto-btn').title = autoOn ? 'Stop auto-advance' : 'Auto-advance';
+  if (autoOn) autoTimer = setInterval(() => goTo(idx+1), AUTO_SECS*1000);
+  else clearInterval(autoTimer);
 }
  
-// ═══════════════════════════════════════════════════════════════
-//  FORECAST MODAL
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+//  AMBIENT MODE
+// ══════════════════════════════════════════════════════════
+function enterAmbient(cam) {
+  cam = cam || cams[idx];
+  if (!cam) return;
+  const overlay = document.getElementById('ambient-overlay');
+  const af = document.getElementById('ambient-frame');
+  af.src = cam.embedUrl || '';
+  document.getElementById('ambient-loc').textContent = cam.name;
+  document.getElementById('ambient-cond').textContent = cam.waveHeadline || '';
+  overlay.classList.add('show');
+  // Request fullscreen
+  try { overlay.requestFullscreen && overlay.requestFullscreen(); } catch(_) {}
+  // Touch to show UI
+  overlay.addEventListener('touchstart', () => {
+    overlay.classList.add('touch-active');
+    clearTimeout(overlay._hideTimer);
+    overlay._hideTimer = setTimeout(() => overlay.classList.remove('touch-active'), 3000);
+  }, { passive: true });
+}
+ 
+function exitAmbient() {
+  document.getElementById('ambient-overlay').classList.remove('show');
+  document.getElementById('ambient-frame').src = '';
+  try { document.exitFullscreen && document.exitFullscreen(); } catch(_) {}
+}
+ 
+// ══════════════════════════════════════════════════════════
+//  MODAL
+// ══════════════════════════════════════════════════════════
 function showModal() {
   const cam = cams[idx];
   if (!cam) return;
+  document.getElementById('mtitle').textContent = cam.name;
+  document.getElementById('mreg').textContent = cam.region;
  
-  document.getElementById("mtitle").textContent = cam.name;
-  document.getElementById("mreg").textContent   = cam.region;
+  // AI block
+  const ai = aiRating(cam);
+  const maiScore = document.getElementById('mai-score');
+  maiScore.textContent = `${ai.score} / 100`;
+  maiScore.style.color = scoreColor(ai.score);
+  document.getElementById('mai-verdict').textContent = ai.verdict;
+  document.getElementById('mai-window').textContent = ai.window;
  
-  const liveTag = document.getElementById("mlive");
-  liveTag.style.display = cam.isLive ? "inline-flex" : "none";
+  // Visual badges
+  renderBadges(conditionBadges(cam), document.getElementById('vis-badges'));
  
-  const f    = cam.forecast;
-  const grid = document.getElementById("sgrid");
- 
+  // Stats grid
+  const f = cam.forecast;
+  const grid = document.getElementById('sgrid');
   if (f) {
     grid.innerHTML = `
-      <div class="scard">
-        <div class="slbl">Wave Height</div>
-        <div class="sval">${f.waveHeightFt}<span style="font-size:.9rem">ft</span></div>
-        <div class="ssub">${(parseFloat(f.waveHeightFt)/3.281).toFixed(1)}m</div>
-      </div>
-      <div class="scard">
-        <div class="slbl">Swell Period</div>
-        <div class="sval">${f.periodSec}<span style="font-size:.9rem">s</span></div>
-        <div class="ssub">${f.periodSec>14?"Long — very clean":f.periodSec>10?"Medium — good":f.periodSec>7?"Short":"Choppy"}</div>
-      </div>
-      <div class="scard">
-        <div class="slbl">Swell Height</div>
-        <div class="sval">${f.swellHeightFt}<span style="font-size:.9rem">ft</span></div>
-        <div class="ssub">Ground swell</div>
-      </div>
-      <div class="scard">
-        <div class="slbl">Direction</div>
-        <div class="sval">${compass(f.directionDeg)}</div>
-        <div class="ssub">${f.directionDeg}°</div>
-      </div>`;
+      <div class="scard"><div class="slbl">Wave Height</div><div class="sval">${f.waveHeightFt}<span style="font-size:.85rem">ft</span></div><div class="ssub">${(parseFloat(f.waveHeightFt)/3.281).toFixed(1)}m</div></div>
+      <div class="scard"><div class="slbl">Period</div><div class="sval">${f.periodSec}<span style="font-size:.85rem">s</span></div><div class="ssub">${f.periodSec>14?'Long':f.periodSec>10?'Medium':'Short'}</div></div>
+      <div class="scard"><div class="slbl">Swell</div><div class="sval">${f.swellHeightFt}<span style="font-size:.85rem">ft</span></div><div class="ssub">Ground swell</div></div>
+      <div class="scard"><div class="slbl">Direction</div><div class="sval">${compass(f.directionDeg)}</div><div class="ssub">${f.directionDeg}°</div></div>`;
   } else {
-    grid.innerHTML = `<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:16px">${cam.desc || "No forecast available for this location."}</div>`;
+    grid.innerHTML = `<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:16px">${cam.desc||'No forecast available.'}</div>`;
   }
  
+  // Note
   const sc = cam.score ?? 50;
   const notes = {
-    sf: `🔥 Exceptional right now at ${cam.name}. ${f ? f.swellHeightFt + "ft of ground swell with " + f.periodSec + "s period — " : ""}powerful, well-shaped waves. ${cam.desc || ""}`,
-    sg: `Solid surf at ${cam.name}. ${f ? f.waveHeightFt + "ft with " + f.periodSec + "s period. " : ""}Above average — expect quality rides. ${cam.desc || ""}`,
-    so: `Decent waves at ${cam.name} — ${f ? f.waveHeightFt + "ft. " : ""}Worth watching, action in the water. ${cam.desc || ""}`,
-    sl: `Small today at ${cam.name}${f ? " — " + f.waveHeightFt + "ft" : ""}. Great scenery. Check back after the next swell. ${cam.desc || ""}`
+    sf:`🔥 Exceptional at ${cam.name} right now. ${cam.desc||''}`,
+    sg:`Solid surf at ${cam.name}. Above average — worth watching. ${cam.desc||''}`,
+    so:`Decent waves at ${cam.name}. ${cam.desc||''}`,
+    sl:`Small today at ${cam.name}. Great scenery. ${cam.desc||''}`
   };
-  document.getElementById("fnote").textContent = notes[scoreCls(sc)] || cam.desc || "";
-  document.getElementById("modal").classList.add("show");
+  document.getElementById('fnote').textContent = notes[scoreCls(sc)] || cam.desc || '';
+  document.getElementById('modal').classList.add('show');
 }
+function hideModal(){ document.getElementById('modal').classList.remove('show'); }
  
-function hideModal() { document.getElementById("modal").classList.remove("show"); }
- 
-// ═══════════════════════════════════════════════════════════════
-//  SWIPE GESTURES (mobile)
-// ═══════════════════════════════════════════════════════════════
-let tx = 0, ty = 0;
-const vw = document.getElementById("vwrap");
-vw.addEventListener("touchstart", e => { tx = e.changedTouches[0].screenX; ty = e.changedTouches[0].screenY; }, { passive:true });
-vw.addEventListener("touchend",   e => {
-  const dx = e.changedTouches[0].screenX - tx;
-  const dy = e.changedTouches[0].screenY - ty;
-  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 55) navigate(dx < 0 ? 1 : -1);
-}, { passive:true });
- 
-// Keyboard (desktop)
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowRight" || e.key === "ArrowDown") navigate(1);
-  if (e.key === "ArrowLeft"  || e.key === "ArrowUp")   navigate(-1);
-  if (e.key === "Escape") hideModal();
+// ══════════════════════════════════════════════════════════
+//  SWIPE + KEYBOARD
+// ══════════════════════════════════════════════════════════
+let tx=0,ty=0;
+const hero=document.getElementById('hero');
+hero.addEventListener('touchstart',e=>{tx=e.changedTouches[0].screenX;ty=e.changedTouches[0].screenY;},{passive:true});
+hero.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].screenX-tx,dy=e.changedTouches[0].screenY-ty;
+  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>55) navigate(dx<0?1:-1);
+},{passive:true});
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') navigate(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') navigate(-1);
+  if(e.key==='Escape'){hideModal();exitAmbient();}
+  if(e.key==='f'||e.key==='F') enterAmbient();
 });
  
-// ═══════════════════════════════════════════════════════════════
-//  WAKE LOCK — prevents screen sleep on TV / kiosk
-// ═══════════════════════════════════════════════════════════════
-async function requestWakeLock() {
-  try { if ("wakeLock" in navigator) await navigator.wakeLock.request("screen"); } catch(_) {}
-}
+// ══════════════════════════════════════════════════════════
+//  WAKE LOCK
+// ══════════════════════════════════════════════════════════
+async function wakeLock(){ try{ if('wakeLock'in navigator) await navigator.wakeLock.request('screen'); }catch(_){} }
  
-// ═══════════════════════════════════════════════════════════════
-//  BACKGROUND REFRESH — silently re-fetches feed every 15 min
-//  Updates cam order if scores changed, without interrupting playback
-// ═══════════════════════════════════════════════════════════════
-async function backgroundRefresh() {
+// ══════════════════════════════════════════════════════════
+//  BACKGROUND REFRESH
+// ══════════════════════════════════════════════════════════
+async function bgRefresh() {
   try {
     const data = await fetchFeed();
-    const currentCamId = cams[idx]?.id;
+    const curId = cams[idx]?.id;
     cams = data.cams || [];
-    feedMeta = { generatedAt: data.generatedAt, liveCount: data.liveCount };
- 
-    // Try to keep the user on the same cam after refresh
-    const newIdx = cams.findIndex(c => c.id === currentCamId);
-    idx = newIdx >= 0 ? newIdx : 0;
- 
-    renderThumbs();
-    syncThumbActive();
-    console.log(`[SurfFlow] Feed refreshed: ${cams.length} cams, ${feedMeta.liveCount} live`);
-  } catch (err) {
-    console.warn("[SurfFlow] Background refresh failed:", err.message);
-  }
+    const ni = cams.findIndex(c=>c.id===curId);
+    idx = ni>=0?ni:0;
+    renderThumbs(); syncThumbs();
+  } catch(e){ console.warn('[SurfFlow] Refresh failed:', e.message); }
 }
  
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  INIT
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 async function init() {
-  const lo    = document.getElementById("lo");
-  const errSc = document.getElementById("error-screen");
- 
-  lo.classList.remove("hidden");
-  errSc.classList.remove("show");
+  const lo = document.getElementById('lo');
+  const errEl = document.getElementById('err');
+  lo.classList.remove('hidden');
+  errEl.classList.remove('show');
  
   try {
-    setLoadStatus("Fetching live wave data...");
+    setLoadStatus('Fetching live wave data...');
     await fetchFeed();
+    setLoadStatus(`${feedMeta.liveCount||0} live cams · ranking by conditions...`);
+    await new Promise(r=>setTimeout(r,300));
+    if (!cams.length) throw new Error('No cams');
  
-    setLoadStatus(`Found ${feedMeta.liveCount || 0} live cams · Ranking by wave score...`);
-    await new Promise(r => setTimeout(r, 400)); // brief pause so user sees the status
- 
-    if (!cams.length) throw new Error("No cams returned");
- 
-    // Render and load first (best) cam
     renderThumbs();
     loadCam(cams[0]);
+    lo.classList.add('hidden');
  
-    // Hide loading screen
-    lo.classList.add("hidden");
- 
-    // Kick off background jobs
-    requestWakeLock();
-    setInterval(backgroundRefresh, 15 * 60 * 1000); // refresh every 15 min
- 
-  } catch (err) {
-    console.error("[SurfFlow] Init failed:", err);
-    lo.classList.add("hidden");
-    errSc.classList.add("show");
+    wakeLock();
+    setInterval(bgRefresh, 15*60*1000);
+  } catch(e) {
+    console.error('[SurfFlow] Init failed:', e);
+    lo.classList.add('hidden');
+    errEl.classList.add('show');
   }
 }
  
-window.addEventListener("load", init);
+window.addEventListener('load', init);
 </script>
 </body>
-</html
+</html>
